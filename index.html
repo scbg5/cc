@@ -9,6 +9,7 @@
   :root{
     --blue:#1674AF; --grey:#737371; --text:#222; --bg:#f2f4f7;
     --field:#fff; --field-border:#cfd3d8; --shadow:0 6px 24px rgba(0,0,0,.08);
+    --ok:#0a7a2a; --warn:#b85c00; --muted:#6b7280;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -25,17 +26,18 @@
   .intro p{margin:0 0 8px}
 
   /* Home tiles */
-  .grid{display:grid;gap:16px;grid-template-columns:repeat(3,1fr);max-width:980px}
-  @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(4,1fr);max-width:980px}
+  @media (max-width:1180px){ .grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:640px){ .grid{grid-template-columns:1fr} }
   .tile{background:var(--field);border:1px solid var(--field-border);border-radius:16px;padding:18px;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:10px;min-height:140px;cursor:pointer;transition:transform .08s ease, box-shadow .12s ease;}
   .tile:hover{box-shadow:0 8px 28px rgba(0,0,0,.12);transform:translateY(-1px)}
   .tile h2{margin:0;font-size:12pt}
   .cta{margin-top:auto;background:var(--blue);color:#fff;border-radius:10px;padding:10px 14px;width:max-content;font-weight:700}
 
-  /* Forms */
+  /* Forms / layout */
   form{max-width:980px}
   .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-  .grid2 .full{grid-column:1 / -1} /* full-width cells */
+  .grid2 .full{grid-column:1 / -1}
   @media (max-width:980px){ .grid2{grid-template-columns:1fr} }
   input,select,textarea{width:100%;background:#fff;border:1px solid var(--field-border);border-radius:12px;padding:12px 14px;font-size:10pt;outline:none}
   input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(22,116,175,.15)}
@@ -47,20 +49,33 @@
   .btn{appearance:none;border:0;cursor:pointer;font-size:10pt;font-weight:700;padding:12px 18px;border-radius:10px;box-shadow:var(--shadow);text-decoration:none;display:inline-flex;align-items:center}
   .btn-primary{background:var(--blue);color:#fff}
   .btn-ghost{background:#e7eaee;color:#2d2d2d;border:1px solid #d5d8dc}
+  .btnDanger{background:#ffe8e8;border:1px solid #ffd0d0}
   .section{display:none}
   .section.active{display:block}
-  .toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#0a7a2a;color:#fff;padding:10px 16px;border-radius:999px;display:none;z-index:20;box-shadow:var(--shadow)}
+  .toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:var(--ok);color:#fff;padding:10px 16px;border-radius:999px;display:none;z-index:20;box-shadow:var(--shadow)}
 
   /* Hidden Admin Overlay */
   #hotspot{position:fixed;top:0;right:0;width:80px;height:80px;z-index:15}
   #admin{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}
-  .panel{background:#fff;border-radius:14px;max-width:720px;width:100%;padding:20px;box-shadow:var(--shadow)}
+  .panel{background:#fff;border-radius:14px;max-width:760px;width:100%;padding:20px;box-shadow:var(--shadow)}
   .panel h2{margin:0 0 8px;font-size:12pt}
   .panel p{margin:4px 0 14px;color:#444}
   .admin-grid{display:grid;grid-template-columns:1fr;gap:10px}
   .admin-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--field-border);border-radius:12px;padding:10px 12px;background:#fff}
   .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
   .btn-secondary{background:#f1f3f5;border:1px solid #dde1e6;color:#222}
+
+  /* Action items list */
+  .list{margin-top:14px;max-width:980px}
+  .item{display:grid;grid-template-columns:1fr 110px 140px 120px 90px 90px;gap:10px;border:1px solid var(--field-border);border-radius:12px;padding:10px 12px;align-items:center;margin-bottom:8px;background:#fff}
+  .item small{color:var(--muted)}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-weight:700}
+  .badge.open{background:#eef2ff;color:#1e3a8a;border:1px solid #c7d2fe}
+  .badge.done{background:#eaffef;color:#065f46;border:1px solid #bbf7d0}
+  .muted{color:var(--muted)}
+  @media (max-width:980px){
+    .item{grid-template-columns:1fr 1fr;grid-auto-rows:auto}
+  }
 </style>
 </head>
 <body>
@@ -90,6 +105,11 @@
           <h2>Exhibition Feedback</h2>
           <p>Rate our stand and team, and share suggestions.</p>
           <span class="cta">Start Survey</span>
+        </div>
+        <div class="tile" onclick="go('actions')">
+          <h2>Action Items</h2>
+          <p>Create and track tasks from meetings. Assign to cluster & person with due date.</p>
+          <span class="cta">Open Actions</span>
         </div>
       </div>
     </div>
@@ -143,11 +163,8 @@
           <input name="title" placeholder="Title / Role" />
           <input name="phone" placeholder="Phone Number" inputmode="tel" />
           <input type="email" name="email" placeholder="Email Address" inputmode="email" required />
-
           <input type="date" name="preferredDate" />
           <input type="time" name="preferredTime" />
-
-          <!-- NEW: Who to meet -->
           <select name="meetingWith" class="full">
             <option value="" selected disabled>Who would you like to meet?</option>
             <option>Senior Management</option>
@@ -159,8 +176,6 @@
             <option>HR / Recruitment</option>
             <option>Other (specify in agenda)</option>
           </select>
-
-          <!-- Full width to avoid overlap -->
           <select name="location" class="full">
             <option value="" selected disabled>Meeting Location</option>
             <option>On-site at CALIDUS booth</option>
@@ -168,7 +183,6 @@
             <option>Follow-up call</option>
           </select>
         </div>
-
         <div class="row">
           <span>Topic(s):</span>
           <label><input type="checkbox" name="topics" value="Aerospace" /> Aerospace</label>
@@ -177,9 +191,7 @@
           <label><input type="checkbox" name="topics" value="Space Systems" /> Space</label>
           <label><input type="checkbox" name="topics" value="Cyber Systems" /> Cyber</label>
         </div>
-
         <textarea name="agenda" placeholder="Agenda / discussion points..."></textarea>
-
         <div class="actions">
           <button type="button" class="btn btn-ghost" onclick="go('home')">&larr; Back</button>
           <button type="button" class="btn btn-ghost" id="clearMeet">Clear</button>
@@ -240,6 +252,37 @@
       </form>
     </div>
 
+    <!-- ACTION ITEMS -->
+    <div id="actions" class="content section">
+      <h1 class="title">MEETING <span class="blue">ACTION ITEMS</span></h1>
+      <p class="intro">Capture tasks during/after meetings. Assign them to a cluster and a person, set due dates, and track completion.</p>
+
+      <form id="actionForm" autocomplete="on">
+        <div class="grid2">
+          <input name="title" placeholder="Task title (what needs to be done?)" class="full" required />
+          <select name="cluster">
+            <option value="" selected disabled>Cluster</option>
+            <option>Aerospace</option>
+            <option>Land Systems</option>
+            <option>Naval Systems</option>
+            <option>Space Systems</option>
+            <option>Cyber Systems</option>
+          </select>
+          <input name="assignee" placeholder="Assigned to (name / company)" />
+          <input type="date" name="dueDate" />
+        </div>
+        <textarea name="notes" placeholder="Notes / context / next steps..."></textarea>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" onclick="go('home')">&larr; Back</button>
+          <button type="button" class="btn btn-ghost" id="clearAction">Clear</button>
+          <button type="submit" class="btn btn-primary">Add Action</button>
+        </div>
+      </form>
+
+      <!-- Live list -->
+      <div class="list" id="actionList"></div>
+    </div>
+
   </div>
 </div>
 
@@ -273,6 +316,14 @@
           <button class="btn btn-secondary" id="clrSurvey">Clear</button>
         </div>
       </div>
+      <div class="admin-row">
+        <div><strong>Action Items</strong> — total: <span id="countActions">0</span></div>
+        <div class="admin-actions">
+          <button class="btn btn-secondary" id="expActCsv">Export CSV</button>
+          <button class="btn btn-secondary" id="expActJson">Export JSON</button>
+          <button class="btn btn-secondary" id="clrAct">Clear</button>
+        </div>
+      </div>
       <div class="admin-row" style="justify-content:flex-end">
         <button class="btn btn-ghost" id="closeAdmin">Close</button>
       </div>
@@ -292,29 +343,33 @@
   const toast = document.getElementById('toast');
   function doneThenHome(){
     toast.style.display='block';
-    setTimeout(()=>{ toast.style.display='none'; go('home'); updateCounts(); }, 1500);
+    setTimeout(()=>{ toast.style.display='none'; go('home'); updateCounts(); }, 1200);
   }
 
   // ---- Storage keys
   const K_REG  = 'calidus_registration_v1';
   const K_MEET = 'calidus_meetings_v1';
   const K_SURV = 'calidus_survey_v1';
+  const K_ACT  = 'calidus_actions_v1';
 
   const read  = (k)=>{ try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]} };
   const write = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
   const esc   = v => `"${String(v??'').replace(/"/g,'""')}"`;
-  const dl = (filename, text, type) => {
+  const dl    = (filename, text, type) => {
     const blob = new Blob([text], {type});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = filename;
     document.body.appendChild(a); a.click();
     setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
   };
+  const nowDate = ()=> new Date().toISOString().slice(0,10);
 
   function updateCounts(){
-    document.getElementById('countReg').textContent   = read(K_REG).length;
-    document.getElementById('countMeet').textContent  = read(K_MEET).length;
-    document.getElementById('countSurvey').textContent= read(K_SURV).length;
+    document.getElementById('countReg').textContent     = read(K_REG).length;
+    document.getElementById('countMeet').textContent    = read(K_MEET).length;
+    document.getElementById('countSurvey').textContent  = read(K_SURV).length;
+    document.getElementById('countActions').textContent = read(K_ACT).length;
+    renderActions();
   }
 
   // ---- Registration
@@ -339,7 +394,7 @@
     });
   })();
 
-  // ---- Meeting (includes meetingWith)
+  // ---- Meeting
   (function(){
     const form=document.getElementById('meetForm');
     document.getElementById('clearMeet').onclick=()=>form.reset();
@@ -384,6 +439,74 @@
     });
   })();
 
+  // ---- Action Items
+  (function(){
+    const form=document.getElementById('actionForm');
+    const list=document.getElementById('actionList');
+    document.getElementById('clearAction').onclick=()=>form.reset();
+
+    function render(){
+      const items = read(K_ACT);
+      if(!items.length){
+        list.innerHTML = '<div class="muted">No action items yet.</div>';
+        return;
+      }
+      list.innerHTML = items.map((a,i)=>{
+        const due = a.dueDate ? new Date(a.dueDate) : null;
+        const overdue = due && (new Date(due.toDateString()) < new Date(new Date().toDateString())) && a.status!=='Complete';
+        const dueTxt = a.dueDate ? (overdue ? `<span style="color:#b91c1c;font-weight:700">${a.dueDate}</span>` : a.dueDate) : '<span class="muted">—</span>';
+        return `
+          <div class="item">
+            <div>
+              <div><strong>${a.title||''}</strong></div>
+              <small>${a.notes?a.notes:'&nbsp;'}</small>
+            </div>
+            <div><small class="muted">Cluster</small><br>${a.cluster||'—'}</div>
+            <div><small class="muted">Assignee</small><br>${a.assignee||'—'}</div>
+            <div><small class="muted">Due</small><br>${dueTxt}</div>
+            <div>
+              <span class="badge ${a.status==='Complete'?'done':'open'}">${a.status||'Open'}</span>
+            </div>
+            <div style="display:flex;gap:6px;justify-content:flex-end">
+              ${a.status==='Complete' ? '' : `<button class="btn btn-ghost" data-action="done" data-index="${i}">Complete</button>`}
+              <button class="btn btnDanger" data-action="del" data-index="${i}">Delete</button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    list.addEventListener('click',(e)=>{
+      const btn = e.target.closest('button[data-action]');
+      if(!btn) return;
+      const idx = +btn.dataset.index;
+      const action = btn.dataset.action;
+      const items = read(K_ACT);
+      if(action==='done'){ items[idx].status='Complete'; }
+      if(action==='del'){ items.splice(idx,1); }
+      write(K_ACT, items);
+      render(); updateCounts();
+    });
+
+    form.addEventListener('submit',(e)=>{
+      e.preventDefault();
+      const fd = new FormData(form);
+      const entry = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        timestamp: new Date().toISOString(),
+        title: fd.get('title')||'',
+        cluster: fd.get('cluster')||'',
+        assignee: fd.get('assignee')||'',
+        dueDate: fd.get('dueDate')||'',
+        notes: fd.get('notes')||'',
+        status: 'Open'
+      };
+      const items = read(K_ACT); items.push(entry); write(K_ACT, items);
+      form.reset(); render(); updateCounts();
+    });
+
+    window.renderActions = render; // expose to updateCounts
+  })();
+
   // ---- Hidden Admin (long-press top-right)
   (function(){
     const hotspot = document.getElementById('hotspot');
@@ -396,8 +519,6 @@
     hotspot.addEventListener('touchstart', start, {passive:true});
     ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=>hotspot.addEventListener(ev, cancel));
     closeBtn.addEventListener('click', ()=> admin.style.display='none');
-
-    const nowDate = ()=> new Date().toISOString().slice(0,10);
 
     // Registration exports
     document.getElementById('expRegCsv').onclick=()=>{
@@ -418,16 +539,13 @@
       if(confirm('Clear ALL registrations on this device?')){ localStorage.removeItem(K_REG); updateCounts(); }
     };
 
-    // Meeting exports (includes meetingWith)
+    // Meeting exports
     document.getElementById('expMeetCsv').onclick=()=>{
       const rows = read(K_MEET); if(!rows.length) return alert('No meetings to export.');
       const headers=['timestamp','company','country','firstName','lastName','title','phone','email','preferredDate','preferredTime','meetingWith','location','topics','agenda'];
       const lines=[headers.join(',')];
       rows.forEach(r=>{
-        const obj = {
-          ...r,
-          topics: Array.isArray(r.topics) ? r.topics.join('; ') : (r.topics||'')
-        };
+        const obj = {...r, topics: Array.isArray(r.topics) ? r.topics.join('; ') : (r.topics||'')};
         lines.push(headers.map(h=>esc(obj[h])).join(','));
       });
       dl(`calidus_meetings_${nowDate()}.csv`, lines.join('\r\n'), 'text/csv');
@@ -458,7 +576,26 @@
     document.getElementById('clrSurvey').onclick=()=>{
       if(confirm('Clear ALL surveys on this device?')){ localStorage.removeItem(K_SURV); updateCounts(); }
     };
+
+    // Action Items exports
+    document.getElementById('expActCsv').onclick=()=>{
+      const rows = read(K_ACT); if(!rows.length) return alert('No action items to export.');
+      const headers=['timestamp','title','cluster','assignee','dueDate','status','notes'];
+      const lines=[headers.join(',')];
+      rows.forEach(r=>{ lines.push(headers.map(h=>esc(r[h])).join(',')); });
+      dl(`calidus_actions_${nowDate()}.csv`, lines.join('\r\n'), 'text/csv');
+    };
+    document.getElementById('expActJson').onclick=()=>{
+      const rows = read(K_ACT); if(!rows.length) return alert('No action items to export.');
+      dl(`calidus_actions_${nowDate()}.json`, JSON.stringify(rows, null, 2), 'application/json');
+    };
+    document.getElementById('clrAct').onclick=()=>{
+      if(confirm('Clear ALL action items on this device?')){ localStorage.removeItem(K_ACT); updateCounts(); }
+    };
   })();
+
+  // Initial counts/list render
+  updateCounts();
 </script>
 </body>
 </html>
