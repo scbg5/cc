@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>CALIDUS Connect</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<style>
+  :root{
+    --blue:#1674AF; --grey:#737371; --text:#222; --bg:#f2f4f7;
+    --field:#fff; --field-border:#cfd3d8; --shadow:0 6px 24px rgba(0,0,0,.08);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);font-family:Bahnschrift,"Bahnschrift Regular","Segoe UI",Arial,sans-serif;font-size:10pt;line-height:1.45;color:var(--text)}
+  .frame{min-height:100%;padding:24px}
+  .sheet{position:relative;background:#fff;border:6px solid #2b2b2b;border-radius:4px;min-height:calc(100vh - 48px);overflow:hidden;display:flex;flex-direction:column}
+  .sheet::before{content:"";position:absolute;inset:0;background:url("G5_BG.png") center/cover no-repeat;opacity:.08;pointer-events:none;z-index:0}
+  .content{position:relative;z-index:2;padding:42px 48px 40px;flex:1;display:flex;flex-direction:column}
+  .logo{position:absolute;top:16px;right:20px;height:100px;width:auto;z-index:3}
+  @media (max-width:1024px){ .logo{height:80px} }
+  .title{font-size:14pt;font-weight:700;margin:0 0 12px}
+  .blue{color:var(--blue)}
+  .intro{max-width:980px;margin-bottom:18px}
+  .intro p{margin:0 0 8px}
+
+  /* Home tiles */
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(3,1fr);max-width:980px}
+  @media (max-width:980px){ .grid{grid-template-columns:1fr} }
+  .tile{background:var(--field);border:1px solid var(--field-border);border-radius:16px;padding:18px;box-shadow:var(--shadow);text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:10px;min-height:140px;cursor:pointer;transition:transform .08s ease, box-shadow .12s ease;}
+  .tile:hover{box-shadow:0 8px 28px rgba(0,0,0,.12);transform:translateY(-1px)}
+  .tile h2{margin:0;font-size:12pt}
+  .cta{margin-top:auto;background:var(--blue);color:#fff;border-radius:10px;padding:10px 14px;width:max-content;font-weight:700}
+
+  /* Forms */
+  form{max-width:980px}
+  .grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .grid2 .full{grid-column:1 / -1} /* full-width cells */
+  @media (max-width:980px){ .grid2{grid-template-columns:1fr} }
+  input,select,textarea{width:100%;background:#fff;border:1px solid var(--field-border);border-radius:12px;padding:12px 14px;font-size:10pt;outline:none}
+  input:focus,select:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 2px rgba(22,116,175,.15)}
+  textarea{resize:none;min-height:100px}
+  .row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:6px 0}
+  .row label{display:inline-flex;align-items:center;gap:8px;cursor:pointer}
+  .row input[type="radio"], .row input[type="checkbox"]{width:16px;height:16px}
+  .actions{display:flex;gap:12px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+  .btn{appearance:none;border:0;cursor:pointer;font-size:10pt;font-weight:700;padding:12px 18px;border-radius:10px;box-shadow:var(--shadow);text-decoration:none;display:inline-flex;align-items:center}
+  .btn-primary{background:var(--blue);color:#fff}
+  .btn-ghost{background:#e7eaee;color:#2d2d2d;border:1px solid #d5d8dc}
+  .section{display:none}
+  .section.active{display:block}
+  .toast{position:fixed;left:50%;top:16px;transform:translateX(-50%);background:#0a7a2a;color:#fff;padding:10px 16px;border-radius:999px;display:none;z-index:20;box-shadow:var(--shadow)}
+
+  /* Hidden Admin Overlay */
+  #hotspot{position:fixed;top:0;right:0;width:80px;height:80px;z-index:15}
+  #admin{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;padding:20px;z-index:30}
+  .panel{background:#fff;border-radius:14px;max-width:720px;width:100%;padding:20px;box-shadow:var(--shadow)}
+  .panel h2{margin:0 0 8px;font-size:12pt}
+  .panel p{margin:4px 0 14px;color:#444}
+  .admin-grid{display:grid;grid-template-columns:1fr;gap:10px}
+  .admin-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid var(--field-border);border-radius:12px;padding:10px 12px;background:#fff}
+  .admin-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .btn-secondary{background:#f1f3f5;border:1px solid #dde1e6;color:#222}
+</style>
+</head>
+<body>
+<div id="hotspot" aria-hidden="true"></div>
+<div class="toast" id="toast">Saved! Returning to home…</div>
+
+<div class="frame">
+  <div class="sheet">
+    <img src="logo.png" alt="CALIDUS Logo" class="logo" />
+
+    <!-- HOME -->
+    <div id="home" class="content section active">
+      <h1 class="title">WELCOME TO <span class="blue">CALIDUS CONNECT</span></h1>
+      <div class="intro"><p>Please choose one of the options below.</p></div>
+      <div class="grid">
+        <div class="tile" onclick="go('reg')">
+          <h2>Register Your Interest</h2>
+          <p>Leave your details and areas of interest for follow-up.</p>
+          <span class="cta">Open Registration</span>
+        </div>
+        <div class="tile" onclick="go('meet')">
+          <h2>Request a Meeting</h2>
+          <p>Select a preferred date/time, who to meet, and topics to discuss.</p>
+          <span class="cta">Request Meeting</span>
+        </div>
+        <div class="tile" onclick="go('survey')">
+          <h2>Exhibition Feedback</h2>
+          <p>Rate our stand and team, and share suggestions.</p>
+          <span class="cta">Start Survey</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGISTRATION -->
+    <div id="reg" class="content section">
+      <h1 class="title">REGISTER <span class="blue">YOUR INTEREST</span></h1>
+      <p class="intro">Please fill out the form below. One of our team members will get back to you.</p>
+      <form id="regForm" autocomplete="on">
+        <div class="grid2">
+          <input name="company" placeholder="Company Name" required />
+          <input name="country" placeholder="Country" />
+          <input name="firstName" placeholder="First Name" required />
+          <input name="lastName" placeholder="Last Name" required />
+          <input name="title" placeholder="Title / Role" />
+          <input name="phone" placeholder="Phone Number" inputmode="tel" />
+          <input type="email" name="email" placeholder="Email Address" inputmode="email" required />
+          <div class="row">
+            <span>Are you a Supplier:</span>
+            <label><input type="radio" name="supplier" value="Yes" required /> Yes</label>
+            <label><input type="radio" name="supplier" value="No" /> No</label>
+          </div>
+        </div>
+        <div class="row">
+          <span>Which cluster(s) are you interested in:</span>
+          <label><input type="checkbox" name="clusters" value="Aerospace" /> Aerospace</label>
+          <label><input type="checkbox" name="clusters" value="Land Systems" /> Land</label>
+          <label><input type="checkbox" name="clusters" value="Naval Systems" /> Naval</label>
+          <label><input type="checkbox" name="clusters" value="Space Systems" /> Space</label>
+          <label><input type="checkbox" name="clusters" value="Cyber Systems" /> Cyber</label>
+        </div>
+        <textarea name="notes" placeholder="Additional information or interest areas..."></textarea>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" onclick="go('home')">&larr; Back</button>
+          <button type="button" class="btn btn-ghost" id="clearReg">Clear</button>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- MEETING -->
+    <div id="meet" class="content section">
+      <h1 class="title">REQUEST A <span class="blue">MEETING</span></h1>
+      <p class="intro">Provide your details and preferred date/time. We’ll follow up to confirm.</p>
+      <form id="meetForm" autocomplete="on">
+        <div class="grid2">
+          <input name="company" placeholder="Company Name" required />
+          <input name="country" placeholder="Country" />
+          <input name="firstName" placeholder="First Name" required />
+          <input name="lastName" placeholder="Last Name" required />
+          <input name="title" placeholder="Title / Role" />
+          <input name="phone" placeholder="Phone Number" inputmode="tel" />
+          <input type="email" name="email" placeholder="Email Address" inputmode="email" required />
+
+          <input type="date" name="preferredDate" />
+          <input type="time" name="preferredTime" />
+
+          <!-- NEW: Who to meet -->
+          <select name="meetingWith" class="full">
+            <option value="" selected disabled>Who would you like to meet?</option>
+            <option>Senior Management</option>
+            <option>Technical / Engineering</option>
+            <option>Supply Chain & Procurement</option>
+            <option>Business Development / Sales</option>
+            <option>Program Management</option>
+            <option>Media / Communications</option>
+            <option>HR / Recruitment</option>
+            <option>Other (specify in agenda)</option>
+          </select>
+
+          <!-- Full width to avoid overlap -->
+          <select name="location" class="full">
+            <option value="" selected disabled>Meeting Location</option>
+            <option>On-site at CALIDUS booth</option>
+            <option>Virtual</option>
+            <option>Follow-up call</option>
+          </select>
+        </div>
+
+        <div class="row">
+          <span>Topic(s):</span>
+          <label><input type="checkbox" name="topics" value="Aerospace" /> Aerospace</label>
+          <label><input type="checkbox" name="topics" value="Land Systems" /> Land</label>
+          <label><input type="checkbox" name="topics" value="Naval Systems" /> Naval</label>
+          <label><input type="checkbox" name="topics" value="Space Systems" /> Space</label>
+          <label><input type="checkbox" name="topics" value="Cyber Systems" /> Cyber</label>
+        </div>
+
+        <textarea name="agenda" placeholder="Agenda / discussion points..."></textarea>
+
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" onclick="go('home')">&larr; Back</button>
+          <button type="button" class="btn btn-ghost" id="clearMeet">Clear</button>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- SURVEY -->
+    <div id="survey" class="content section">
+      <h1 class="title">EXHIBITION <span class="blue">FEEDBACK SURVEY</span></h1>
+      <p class="intro">Thanks for visiting our stand. Please share your feedback.</p>
+      <form id="surveyForm" autocomplete="on">
+        <div class="grid2">
+          <input name="name" placeholder="Your Name" />
+          <input name="company" placeholder="Company / Organization" />
+          <input name="email" placeholder="Email Address" inputmode="email" />
+          <select name="role">
+            <option value="" selected disabled>Your Role / Visitor Type</option>
+            <option>Government / Defense Official</option>
+            <option>Industry Professional</option>
+            <option>Media / Press</option>
+            <option>General Visitor</option>
+          </select>
+        </div>
+        <div class="row">
+          <span>How did you hear about CALIDUS?</span>
+          <label><input type="radio" name="source" value="Social Media" /> Social Media</label>
+          <label><input type="radio" name="source" value="News / Media" /> News / Media</label>
+          <label><input type="radio" name="source" value="Referral" /> Referral</label>
+          <label><input type="radio" name="source" value="Exhibition Walk-in" /> Exhibition Walk-in</label>
+        </div>
+        <div class="row">
+          <span>Which areas interested you most?</span>
+          <label><input type="checkbox" name="interests" value="Aerospace" /> Aerospace</label>
+          <label><input type="checkbox" name="interests" value="Land Systems" /> Land</label>
+          <label><input type="checkbox" name="interests" value="Naval Systems" /> Naval</label>
+          <label><input type="checkbox" name="interests" value="Space Systems" /> Space</label>
+          <label><input type="checkbox" name="interests" value="Cyber Systems" /> Cyber</label>
+        </div>
+        <div class="row">
+          <label>Staff Friendliness:
+            <select name="staffRating"><option value="">--</option><option>Excellent</option><option>Good</option><option>Average</option><option>Poor</option></select>
+          </label>
+          <label>Stand Presentation:
+            <select name="standRating"><option value="">--</option><option>Excellent</option><option>Good</option><option>Average</option><option>Poor</option></select>
+          </label>
+          <label>Product Knowledge:
+            <select name="knowledgeRating"><option value="">--</option><option>Excellent</option><option>Good</option><option>Average</option><option>Poor</option></select>
+          </label>
+        </div>
+        <textarea name="comments" placeholder="Additional comments or suggestions..."></textarea>
+        <div class="actions">
+          <button type="button" class="btn btn-ghost" onclick="go('home')">&larr; Back</button>
+          <button type="button" class="btn btn-ghost" id="clearSurvey">Clear</button>
+          <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+      </form>
+    </div>
+
+  </div>
+</div>
+
+<!-- Admin Overlay -->
+<div id="admin" style="display:none">
+  <div class="panel">
+    <h2>Admin</h2>
+    <p>Long-press the top-right corner to open this menu. Export or clear data captured on this device.</p>
+    <div class="admin-grid">
+      <div class="admin-row">
+        <div><strong>Registrations</strong> — total: <span id="countReg">0</span></div>
+        <div class="admin-actions">
+          <button class="btn btn-secondary" id="expRegCsv">Export CSV</button>
+          <button class="btn btn-secondary" id="expRegJson">Export JSON</button>
+          <button class="btn btn-secondary" id="clrReg">Clear</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div><strong>Meetings</strong> — total: <span id="countMeet">0</span></div>
+        <div class="admin-actions">
+          <button class="btn btn-secondary" id="expMeetCsv">Export CSV</button>
+          <button class="btn btn-secondary" id="expMeetJson">Export JSON</button>
+          <button class="btn btn-secondary" id="clrMeet">Clear</button>
+        </div>
+      </div>
+      <div class="admin-row">
+        <div><strong>Surveys</strong> — total: <span id="countSurvey">0</span></div>
+        <div class="admin-actions">
+          <button class="btn btn-secondary" id="expSurveyCsv">Export CSV</button>
+          <button class="btn btn-secondary" id="expSurveyJson">Export JSON</button>
+          <button class="btn btn-secondary" id="clrSurvey">Clear</button>
+        </div>
+      </div>
+      <div class="admin-row" style="justify-content:flex-end">
+        <button class="btn btn-ghost" id="closeAdmin">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // ---- Router
+  function go(id){
+    document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0,0);
+  }
+
+  // ---- Toast
+  const toast = document.getElementById('toast');
+  function doneThenHome(){
+    toast.style.display='block';
+    setTimeout(()=>{ toast.style.display='none'; go('home'); updateCounts(); }, 1500);
+  }
+
+  // ---- Storage keys
+  const K_REG  = 'calidus_registration_v1';
+  const K_MEET = 'calidus_meetings_v1';
+  const K_SURV = 'calidus_survey_v1';
+
+  const read  = (k)=>{ try{return JSON.parse(localStorage.getItem(k)||'[]')}catch{return[]} };
+  const write = (k,v)=> localStorage.setItem(k, JSON.stringify(v));
+  const esc   = v => `"${String(v??'').replace(/"/g,'""')}"`;
+  const dl = (filename, text, type) => {
+    const blob = new Blob([text], {type});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); }, 0);
+  };
+
+  function updateCounts(){
+    document.getElementById('countReg').textContent   = read(K_REG).length;
+    document.getElementById('countMeet').textContent  = read(K_MEET).length;
+    document.getElementById('countSurvey').textContent= read(K_SURV).length;
+  }
+
+  // ---- Registration
+  (function(){
+    const form=document.getElementById('regForm');
+    document.getElementById('clearReg').onclick=()=>form.reset();
+    function getChecked(name){return [...form.querySelectorAll(`input[name="${name}"]:checked`)].map(x=>x.value)}
+    function getRadio(name){const el=form.querySelector(`input[name="${name}"]:checked`);return el?el.value:''}
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const fd=new FormData(form);
+      const entry={
+        timestamp:new Date().toISOString(),
+        company:fd.get('company')||'', country:fd.get('country')||'',
+        firstName:fd.get('firstName')||'', lastName:fd.get('lastName')||'',
+        title:fd.get('title')||'', phone:fd.get('phone')||'', email:fd.get('email')||'',
+        supplier:getRadio('supplier'), clusters:getChecked('clusters'),
+        notes:fd.get('notes')||''
+      };
+      const items=read(K_REG); items.push(entry); write(K_REG, items);
+      form.reset(); doneThenHome();
+    });
+  })();
+
+  // ---- Meeting (includes meetingWith)
+  (function(){
+    const form=document.getElementById('meetForm');
+    document.getElementById('clearMeet').onclick=()=>form.reset();
+    function getChecked(name){return [...form.querySelectorAll(`input[name="${name}"]:checked`)].map(x=>x.value)}
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const fd=new FormData(form);
+      const entry={
+        timestamp:new Date().toISOString(),
+        company:fd.get('company')||'', country:fd.get('country')||'',
+        firstName:fd.get('firstName')||'', lastName:fd.get('lastName')||'',
+        title:fd.get('title')||'', phone:fd.get('phone')||'', email:fd.get('email')||'',
+        preferredDate:fd.get('preferredDate')||'', preferredTime:fd.get('preferredTime')||'',
+        meetingWith:fd.get('meetingWith')||'',
+        location:fd.get('location')||'',
+        topics:getChecked('topics'),
+        agenda:fd.get('agenda')||''
+      };
+      const items=read(K_MEET); items.push(entry); write(K_MEET, items);
+      form.reset(); doneThenHome();
+    });
+  })();
+
+  // ---- Survey
+  (function(){
+    const form=document.getElementById('surveyForm');
+    document.getElementById('clearSurvey').onclick=()=>form.reset();
+    function getChecked(name){return [...form.querySelectorAll(`input[name="${name}"]:checked`)].map(x=>x.value)}
+    function getRadio(name){const el=form.querySelector(`input[name="${name}"]:checked`);return el?el.value:''}
+    form.addEventListener('submit',e=>{
+      e.preventDefault();
+      const fd=new FormData(form);
+      const entry={
+        timestamp:new Date().toISOString(),
+        name:fd.get('name')||'', company:fd.get('company')||'', email:fd.get('email')||'',
+        role:fd.get('role')||'', source:getRadio('source'), interests:getChecked('interests'),
+        staffRating:fd.get('staffRating')||'', standRating:fd.get('standRating')||'', knowledgeRating:fd.get('knowledgeRating')||'',
+        comments:fd.get('comments')||''
+      };
+      const items=read(K_SURV); items.push(entry); write(K_SURV, items);
+      form.reset(); doneThenHome();
+    });
+  })();
+
+  // ---- Hidden Admin (long-press top-right)
+  (function(){
+    const hotspot = document.getElementById('hotspot');
+    const admin = document.getElementById('admin');
+    const closeBtn = document.getElementById('closeAdmin');
+    let timer;
+    const start = ()=>{ timer=setTimeout(()=>{ admin.style.display='flex'; updateCounts(); },2000); };
+    const cancel = ()=> clearTimeout(timer);
+    hotspot.addEventListener('mousedown', start);
+    hotspot.addEventListener('touchstart', start, {passive:true});
+    ['mouseup','mouseleave','touchend','touchcancel'].forEach(ev=>hotspot.addEventListener(ev, cancel));
+    closeBtn.addEventListener('click', ()=> admin.style.display='none');
+
+    const nowDate = ()=> new Date().toISOString().slice(0,10);
+
+    // Registration exports
+    document.getElementById('expRegCsv').onclick=()=>{
+      const rows = read(K_REG); if(!rows.length) return alert('No registrations to export.');
+      const headers=['timestamp','company','country','firstName','lastName','title','phone','email','supplier','clusters','notes'];
+      const lines=[headers.join(',')];
+      rows.forEach(r=>{
+        const obj = {...r, clusters: Array.isArray(r.clusters) ? r.clusters.join('; ') : (r.clusters||'')};
+        lines.push(headers.map(h=>esc(obj[h])).join(','));
+      });
+      dl(`calidus_registrations_${nowDate()}.csv`, lines.join('\r\n'), 'text/csv');
+    };
+    document.getElementById('expRegJson').onclick=()=>{
+      const rows = read(K_REG); if(!rows.length) return alert('No registrations to export.');
+      dl(`calidus_registrations_${nowDate()}.json`, JSON.stringify(rows, null, 2), 'application/json');
+    };
+    document.getElementById('clrReg').onclick=()=>{
+      if(confirm('Clear ALL registrations on this device?')){ localStorage.removeItem(K_REG); updateCounts(); }
+    };
+
+    // Meeting exports (includes meetingWith)
+    document.getElementById('expMeetCsv').onclick=()=>{
+      const rows = read(K_MEET); if(!rows.length) return alert('No meetings to export.');
+      const headers=['timestamp','company','country','firstName','lastName','title','phone','email','preferredDate','preferredTime','meetingWith','location','topics','agenda'];
+      const lines=[headers.join(',')];
+      rows.forEach(r=>{
+        const obj = {
+          ...r,
+          topics: Array.isArray(r.topics) ? r.topics.join('; ') : (r.topics||'')
+        };
+        lines.push(headers.map(h=>esc(obj[h])).join(','));
+      });
+      dl(`calidus_meetings_${nowDate()}.csv`, lines.join('\r\n'), 'text/csv');
+    };
+    document.getElementById('expMeetJson').onclick=()=>{
+      const rows = read(K_MEET); if(!rows.length) return alert('No meetings to export.');
+      dl(`calidus_meetings_${nowDate()}.json`, JSON.stringify(rows, null, 2), 'application/json');
+    };
+    document.getElementById('clrMeet').onclick=()=>{
+      if(confirm('Clear ALL meetings on this device?')){ localStorage.removeItem(K_MEET); updateCounts(); }
+    };
+
+    // Survey exports
+    document.getElementById('expSurveyCsv').onclick=()=>{
+      const rows = read(K_SURV); if(!rows.length) return alert('No surveys to export.');
+      const headers=['timestamp','name','company','email','role','source','interests','staffRating','standRating','knowledgeRating','comments'];
+      const lines=[headers.join(',')];
+      rows.forEach(r=>{
+        const obj = {...r, interests: Array.isArray(r.interests) ? r.interests.join('; ') : (r.interests||'')};
+        lines.push(headers.map(h=>esc(obj[h])).join(','));
+      });
+      dl(`calidus_surveys_${nowDate()}.csv`, lines.join('\r\n'), 'text/csv');
+    };
+    document.getElementById('expSurveyJson').onclick=()=>{
+      const rows = read(K_SURV); if(!rows.length) return alert('No surveys to export.');
+      dl(`calidus_surveys_${nowDate()}.json`, JSON.stringify(rows, null, 2), 'application/json');
+    };
+    document.getElementById('clrSurvey').onclick=()=>{
+      if(confirm('Clear ALL surveys on this device?')){ localStorage.removeItem(K_SURV); updateCounts(); }
+    };
+  })();
+</script>
+</body>
+</html>
